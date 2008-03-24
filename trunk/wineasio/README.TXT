@@ -107,6 +107,10 @@ todo:
 
 4. CHANGE LOG
 -------------
+0.7.4:
+24-MCH-2008: Don't trace in win32_callback.  Set patch-level to 4. (PLJ)
+09-JAN-2008: Nedko Arnaudov supplied a fix for Nuendo under WINE.
+
 0.7.3:
 27-DEC-2007: Make slaving to jack transport work, correct port allocation bug. (RB)
 
