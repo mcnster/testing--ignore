@@ -1160,8 +1160,6 @@ static int jack_process(jack_nframes_t nframes, void * arg)
         /* wait for the WIN32 thread to complete before continuing */
         sem_wait(&This->semaphore2);
 
-        This->toggle = This->toggle ? 0 : 1;
-
         /* copy the ASIO data to JACK */
         for (i = 0; i < This->num_outputs; i++)
         {
@@ -1175,6 +1173,8 @@ static int jack_process(jack_nframes_t nframes, void * arg)
 
             }
         }
+
+        This->toggle = This->toggle ? 0 : 1;
 
 //      This->callbacks->bufferSwitch(This->toggle, ASIOTrue);
 //  }
