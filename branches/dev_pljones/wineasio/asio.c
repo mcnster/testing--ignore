@@ -1251,7 +1251,7 @@ static DWORD CALLBACK win32_callback(LPVOID arg)
                     This.asio_time.timeCode.timeCodeSamples.lo = This.asio_time.timeInfo.samplePosition.lo;
                     This.asio_time.timeCode.timeCodeSamples.hi = 0;
                 }
-                This.callbacks->bufferSwitchTimeInfo(&This.asio_time, This.toggle, ASIOFalse);
+                This.callbacks->bufferSwitchTimeInfo(&This.asio_time, This.toggle, ASIOTrue);
                 This.asio_time.timeInfo.flags &= ~(kSampleRateChanged | kClockSourceChanged);
             }
             else
