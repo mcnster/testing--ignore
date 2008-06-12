@@ -1121,8 +1121,8 @@ static int jack_process(jack_nframes_t nframes, void * arg)
     IWineASIOImpl * This = (IWineASIOImpl*)arg;
     int i, j;
     jack_default_audio_sample_t *in, *out;
-    jack_transport_state_t ts;
-    jack_position_t transport;
+//  jack_transport_state_t ts;
+//  jack_position_t transport;
 
 // ASIOSTInt32LSB support only
     int *buffer;
@@ -1130,13 +1130,13 @@ static int jack_process(jack_nframes_t nframes, void * arg)
     if (This->state != Run)
         return 0;
 
-    ts = jack_transport_query(This->client, &transport);
+//  ts = jack_transport_query(This->client, &transport);
 //  if (ts == JackTransportRolling)
 //  {
         if (This->client_state == Init)
             This->client_state = Run;
 
-        This->sample_position = transport.frame;
+        This->sample_position += nframes; //= transport.frame;
 
         /* get the input data from JACK and copy it to the ASIO buffers */
         for (i = 0; i < This->active_inputs; i++)
@@ -1224,7 +1224,7 @@ static DWORD CALLBACK win32_callback(LPVOID arg)
                     This->asio_time.timeCode.timeCodeSamples.lo = This->asio_time.timeInfo.samplePosition.lo;
                     This->asio_time.timeCode.timeCodeSamples.hi = 0;
                 }
-                This->callbacks->bufferSwitchTimeInfo(&This->asio_time, This->toggle, ASIOFalse);
+                This->callbacks->bufferSwitchTimeInfo(&This->asio_time, This->toggle, ASIOTrue);
                 This->asio_time.timeInfo.flags &= ~(kSampleRateChanged | kClockSourceChanged);
             }
             else
