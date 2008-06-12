@@ -309,9 +309,11 @@ WRAP_THISCALL( ASIOBool __stdcall, IWineASIOImpl_init, (LPWINEASIO iface, void *
         fclose(cmd);
 
         ptr = line;
-        while(strchr(ptr, '/')) ++ptr;
+	    while(strchr(ptr, '/') || strchr(ptr, '\\')) ++ptr;
+	    line = strcasestr(ptr, ".exe");
+	    if (line) *line = '\0';
 
-        asprintf(&client_name, "wineasio[%s]", ptr);
+        asprintf(&client_name, "ASIO_%s", ptr);
         TRACE("client_name: '%s'\n", client_name);
     }
     if (cfg)
