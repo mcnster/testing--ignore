@@ -405,13 +405,14 @@ WRAP_THISCALL( ASIOBool __stdcall, IWineASIOImpl_init, (LPWINEASIO iface, void *
     This->thread = CreateThread(NULL, 0, win32_callback, (LPVOID)This, 0, &This->thread_id);
     if (This->thread)
     {
+        TRACE("(%p) Win32 thread created (%p)\n", This, This->thread);
         WaitForSingleObject(This->start_event, INFINITE);
         CloseHandle(This->start_event);
         This->start_event = INVALID_HANDLE_VALUE;
     }
     else
     {
-        WARN("(%p) Couldn't create thread\n", This);
+        WARN("(%p) Couldn't create Win32 thread\n", This);
         return ASIOFalse;
     }
 
@@ -1197,6 +1198,7 @@ static DWORD CALLBACK win32_callback(LPVOID arg)
 
     /* let IWineASIO_Init know we are alive */
     SetEvent(This->start_event);
+    TRACE("Win32 thread running...\n");
 
     while (1)
     {
@@ -1207,7 +1209,7 @@ static DWORD CALLBACK win32_callback(LPVOID arg)
         if (This->terminate)
         {
             SetEvent(This->stop_event);
-            TRACE("terminated\n");
+            TRACE("Win32 thread terminated\n");
             return 0;
         }
         getNanoSeconds(&This->system_time);
