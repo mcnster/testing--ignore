@@ -381,7 +381,7 @@ WRAP_THISCALL( ASIOBool __stdcall, IWineASIOImpl_init, (LPWINEASIO iface, void *
     This->sample_rate = 48000.0;
     This->block_frames = 1024;
     This->input_latency = This->block_frames;
-    This->output_latency = This->block_frames * 2;
+    This->output_latency = This->block_frames;
     This->miliseconds = (long)((double)(This->block_frames * 1000) / This->sample_rate);
     This->callbacks = NULL;
     This->sample_position = 0;
@@ -452,7 +452,7 @@ WRAP_THISCALL( ASIOBool __stdcall, IWineASIOImpl_init, (LPWINEASIO iface, void *
 
     This->miliseconds = (long)((double)(This->block_frames * 1000) / This->sample_rate);
     This->input_latency = This->block_frames;
-    This->output_latency = This->block_frames * 2;
+    This->output_latency = This->block_frames;
 
 //  TRACE("sample rate: %f\n", This->sample_rate);
 //  TRACE("buffer size: %ld\n", This->block_frames);
