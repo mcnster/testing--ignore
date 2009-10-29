@@ -1033,8 +1033,12 @@ ERROR_PARAM:
 
 WRAP_THISCALL( ASIOError __stdcall, IWineASIOImpl_controlPanel, (LPWINEASIO iface))
 {
-    TRACE("(%p) stub!\n", iface);
+    char* arg_list[] = { "qjackctl", NULL };
 
+    TRACE ("Opening ASIO control panel\n");
+
+    if (fork() == 0)
+        execvp (arg_list[0], arg_list);
     return ASE_OK;
 }
 
