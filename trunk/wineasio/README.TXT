@@ -17,6 +17,10 @@ PREFIX = /usr
 or
 PREFIX = /usr/local
 
+wineasio is currently 32bit only and must live in the lib32 library on 
+64bit systems.  The Makefile tries to autodetect this.  But if it fails,
+set LIBDIR.
+
 Copy the file asio.h from Steinberg's asio-sdk to the wineasio directory
 
 then execute: make
