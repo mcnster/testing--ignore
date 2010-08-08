@@ -17,6 +17,10 @@ PREFIX = /usr
 or
 PREFIX = /usr/local
 
+wineasio is currently 32bit only and must live in the lib32 library on 
+64bit systems.  The Makefile tries to autodetect this.  But if it fails,
+set LIBDIR.
+
 Copy the file asio.h from Steinberg's asio-sdk to the wineasio directory
 
 then execute: make
@@ -107,6 +111,13 @@ todo:
 
 4. CHANGE LOG
 -------------
+0.7.5:
+29-Oct-2009: Added fork with call to qjackctl from ASIOControlPanel(). (JH)
+29-Oct-2009: Changed the SCHED_FIFO priority of the win32 callback thread. (JH)
+28-Oct-2009: Fixed wrongly reported output latency. (JH)
+
+
+
 0.7.4:
 08-APR-2008: Updates to the README.TXT (PLJ)
 02-APR-2008: Move update to "toggle" to hopefully better place (PLJ)
