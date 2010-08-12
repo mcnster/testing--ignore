@@ -795,7 +795,7 @@ WRAP_THISCALL( ASIOError __stdcall, IWineASIOImpl_start, (LPWINEASIO iface))
             if (autoconnect) {
                 // Get the desired JACK output (source) name, if there is one, for this ASIO input
                 envi = get_targetname(This, ENVVAR_INMAP, i);
-                envi = envi ? envi : j < numports ? ports[j] : NULL;
+                envi = envi ? envi : j < numports ? ports[j++] : NULL;
                 if (!envi) continue;
 
                 TRACE("(%p) %d: Connect JACK output '%s' to my input '%s'\n", This, i
@@ -827,7 +827,7 @@ WRAP_THISCALL( ASIOError __stdcall, IWineASIOImpl_start, (LPWINEASIO iface))
             if (autoconnect) {
                 // Get the desired JACK input (target) name, if there is one, for this ASIO output
                 envi = get_targetname(This, ENVVAR_OUTMAP, i);
-                envi = envi ? envi : j < numports ? ports[j] : NULL;
+                envi = envi ? envi : j < numports ? ports[j++] : NULL;
 
                 TRACE("(%p) %d: Connect my output '%s' to JACK input '%s'\n", This, i
                     ,jack_port_name(This->output[i].port)
