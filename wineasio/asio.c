@@ -50,7 +50,7 @@ static const char* DEFAULT_OUTPORT = "Output";
 
 #include <sched.h>
 #include <pthread.h>
-//#include <semaphore.h>
+#include <semaphore.h>
 
 #include "wine/library.h"
 #include "wine/debug.h"
@@ -214,16 +214,14 @@ struct IWineASIOImpl
     HANDLE              start_event;
     HANDLE              stop_event;
     DWORD               thread_id;
-//  sem_t               semaphore1;
-//  sem_t               semaphore2;
+    sem_t               semaphore1;
+    sem_t               semaphore2;
     BOOL                terminate;
 
     Channel             *input;
     Channel             *output;
 
     float                *tempbuf;
-    pthread_cond_t       cond;
-    pthread_mutex_t      mutex;
 };
 
 typedef struct IWineASIOImpl              IWineASIOImpl;
@@ -249,44 +247,16 @@ static ULONG WINAPI IWineASIOImpl_Release(LPWINEASIO iface)
     if (!ref) {
         This->state = Exit;
 
-        /*
-        for (i = 0; i < This->num_inputs; i++) {
-            if (This->input[i].port == NULL) {
-                TRACE("(%p) Not registered input port %i\n", This, i);
-                continue;
-            }
-
-            if (jack_port_unregister(This->client, This->input[i].port)) {
-                TRACE("(%p) Unregistered input port %i: '%s' (%p)\n", This, i, This->input[i].port_name, This->input[i].port);
-            }
-        }
-
-        for (i = 0; i < This->num_outputs; i++) {
-            if (This->output[i].port == NULL) {
-                TRACE("(%p) Not registered output port %i\n", This, i);
-                continue;
-            }
-
-            if (jack_port_unregister(This->client, This->output[i].port)) {
-                TRACE("(%p) Unregistered output port %i: '%s' (%p)\n", This, i, This->output[i].port_name, This->output[i].port);
-            }
-        } */
-
-    	jack_client_close(This->client);
+        jack_client_close(This->client);
         TRACE("JACK client closed\n");
 
         This->terminate = TRUE;
-//      sem_post(&This->semaphore1);
-        pthread_mutex_lock(&This->mutex);
-        pthread_cond_signal(&This->cond);
-        pthread_mutex_unlock(&This->mutex);
+        sem_post(&This->semaphore1);
 
         WaitForSingleObject(This->stop_event, INFINITE);
 
-//      sem_destroy(&This->semaphore1);
-//      sem_destroy(&This->semaphore2);
-        pthread_mutex_destroy(&This->mutex);
-        pthread_cond_destroy(&This->cond);
+        sem_destroy(&This->semaphore1);
+        sem_destroy(&This->semaphore2);
 
         for (i = 0; i < This->num_inputs; i++)
         {
@@ -606,8 +576,8 @@ WRAP_THISCALL( ASIOBool __stdcall, IWineASIOImpl_init, (LPWINEASIO iface, void *
     This->state = Init;
     This->jack_client_priority.sched_priority = -1;
 
-    pthread_mutex_init(&This->mutex, NULL);
-    pthread_cond_init(&This->cond, NULL);
+    sem_init(&This->semaphore1, 0, 0);
+    sem_init(&This->semaphore2, 0, 0);
 
     This->start_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     This->stop_event = CreateEventW(NULL, FALSE, FALSE, NULL);
@@ -856,7 +826,6 @@ WRAP_THISCALL( ASIOError __stdcall, IWineASIOImpl_start, (LPWINEASIO iface))
 
 WRAP_THISCALL( ASIOError __stdcall, IWineASIOImpl_stop, (LPWINEASIO iface))
 {
-    int i;
     IWineASIOImpl * This = (IWineASIOImpl*)iface;
     TRACE("(%p)\n", iface);
 
@@ -1352,10 +1321,11 @@ static int jack_process(jack_nframes_t nframes, void * arg)
             }
         }
 
-        pthread_mutex_lock(&This->mutex);
+        /* wake up the WIN32 thread so it can do its callback */
+        sem_post(&This->semaphore1);
+
         /* wait for the WIN32 thread to complete before continuing */
-        pthread_cond_signal(&This->cond);
-        pthread_mutex_unlock(&This->mutex);
+        sem_wait(&This->semaphore2);
 
         /* copy the ASIO data to JACK */
         for (i = 0; i < This->num_outputs; i++)
@@ -1407,12 +1377,10 @@ static DWORD CALLBACK win32_callback(LPVOID arg)
     SetEvent(This->start_event);
     TRACE("Win32 thread running...\n");
 
-    pthread_mutex_lock(&This->mutex);
-
     while (1)
     {
         /* wait to be woken up by the JACK callback thread */
-        pthread_cond_wait(&This->cond, &This->mutex); //this should (mutex) unlock while waiting and lock automatically when signaled...
+        sem_wait(&This->semaphore1);
 
         /* check for termination */
         if (This->terminate)
@@ -1455,6 +1423,9 @@ static DWORD CALLBACK win32_callback(LPVOID arg)
             else
                 This->callbacks->bufferSwitch(This->toggle, ASIOTrue);
 
+            /* let the JACK thread know we are done */
+            sem_post(&This->semaphore2);
+
             for (i = 0; i < This->num_outputs; i++) {
                 if (This->output[i].active == ASIOTrue) {
                     int j, *buffer = &This->output[i].buffer[This->block_frames * This->toggle];
@@ -1468,8 +1439,6 @@ static DWORD CALLBACK win32_callback(LPVOID arg)
             This->toggle = This->toggle ? 0 : 1;
         }
     }
-
-    pthread_mutex_unlock(&This->mutex);
 
     return 0;
 }
